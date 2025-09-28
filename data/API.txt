@@ -1,0 +1,145 @@
+package com.automation.library;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import java.util.Map;
+
+public class ApiClient {
+
+    private String baseUrl;
+    private RequestSpecification request;
+
+    /**
+     * Constructor to initialize base URL
+     * @param baseUrl API base URL
+     */
+    public ApiClient(String baseUrl) {
+        this.baseUrl = baseUrl;
+        this.request = RestAssured.given().baseUri(baseUrl);
+    }
+
+    /**
+     * Set common headers for API calls
+     * @param headers Map of headers
+     * @return ApiClient instance
+     */
+    public ApiClient setHeaders(Map<String, String> headers) {
+        request.headers(headers);
+        return this;
+    }
+
+    /**
+     * Set request body
+     * @param body Request payload (JSON String / Object)
+     * @return ApiClient instance
+     */
+    public ApiClient setBody(Object body) {
+        request.body(body);
+        return this;
+    }
+
+    /**
+     * GET Request
+     * @param endpoint API endpoint
+     * @param queryParams Map of query parameters
+     * @return Response
+     */
+    public Response get(String endpoint, Map<String, String> queryParams) {
+        return request.queryParams(queryParams).when().get(endpoint).then().extract().response();
+    }
+
+    /**
+     * POST Request
+     * @param endpoint API endpoint
+     * @return Response
+     */
+    public Response post(String endpoint) {
+        return request.when().post(endpoint).then().extract().response();
+    }
+
+    /**
+     * PUT Request
+     * @param endpoint API endpoint
+     * @return Response
+     */
+    public Response put(String endpoint) {
+        return request.when().put(endpoint).then().extract().response();
+    }
+
+    /**
+     * PATCH (Update) Request
+     * @param endpoint API endpoint
+     * @return Response
+     */
+    public Response patch(String endpoint) {
+        return request.when().patch(endpoint).then().extract().response();
+    }
+
+    /**
+     * DELETE Request
+     * @param endpoint API endpoint
+     * @return Response
+     */
+    public Response delete(String endpoint) {
+        return request.when().delete(endpoint).then().extract().response();
+    }
+
+    /**
+     * Reset RequestSpecification to clear old data
+     */
+    public void resetRequest() {
+        this.request = RestAssured.given().baseUri(baseUrl);
+    }
+
+
+    /**
+* Create JSON payload dynamically
+* @param keyValuePairs Map of key-value pairs
+* @return JSON string payload
+*/
+public String createJsonPayload(Map<String, Object> keyValuePairs) {
+StringBuilder payload = new StringBuilder("{");
+keyValuePairs.forEach((key, value) -> {
+payload.append("\"").append(key).append("\":");
+if (value instanceof String) {
+payload.append("\"").append(value).append("\"");
+} else {
+payload.append(value);
+}
+payload.append(",");
+});
+if (payload.charAt(payload.length() - 1) == ',') {
+payload.deleteCharAt(payload.length() - 1);
+}
+payload.append("}");
+return payload.toString();
+}
+
+
+/**
+* Validate response body against JSON schema
+* @param response API Response
+* @param schemaPath Path to JSON schema file
+* @return true if validation passes, false otherwise
+*/
+public boolean validateJsonSchema(Response response, String schemaPath) {
+try {
+response.then().assertThat().body(JsonSchemaValidator.matchesJsonSchemaInClasspath(schemaPath));
+return true;
+} catch (AssertionError e) {
+return false;
+}
+}
+
+/**
+* Validate response contains expected key-value pair
+* @param response API Response
+* @param key JSON field key
+* @param expectedValue Expected value of the key
+* @return true if match found, false otherwise
+*/
+public boolean validateResponseField(Response response, String key, Object expectedValue) {
+Object actualValue = response.jsonPath().get(key);
+return expectedValue.equals(actualValue);
+}
+}
