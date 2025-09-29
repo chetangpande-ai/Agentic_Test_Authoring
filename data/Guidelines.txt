@@ -1,0 +1,128 @@
+High-Level Test Automation Guidelines
+1. Use Reusable Methods from API and WEB Libraries, call import statements, Do not recreate API, WEB class with reusable methods.
+
+Do not duplicate Selenium or API reusable code inside tests.
+Always call wrapper methods like click(), sendKeys(), launchBrowser(), getResponse(), verifyStatusCode(), etc. from the WEB library classes.
+Always call wrapper methods like get(), put(), post(), delete(), setheaders(), etc. from the WEB library classes.
+If a new action is required, first check existing methods; only add a new method in the library if not available.
+
+2. TestNG Framework Usage
+Create all test classes under src/test/java/.
+Use TestNG annotations (@Test, @BeforeMethod, @AfterMethod, etc.).
+Assign appropriate groups (sanity, regression) using:
+
+@Test(groups = {"sanity"})
+public void testLogin() { ... }
+
+Sanity tests = quick checks (smoke-level), Regression tests = full suite.
+
+3. Test Signature (Meta Information)
+Each test method must contain JavaDoc-style signature with:
+Author: Developer name
+Date: Creation/modification date
+Test Case Name: Logical name of the test
+Description: Brief test purpose
+
+Example:
+/**
+ * Author: Chetan Pande
+ * Date: 29-Sep-2025
+ * Test Case Name: verifyLoginWithValidCredentials
+ * Description: Validate user login functionality using valid username/password.
+ */
+@Test(groups = {"sanity"})
+public void verifyLoginWithValidCredentials() {
+    // Test logic
+}
+
+4. Code Reuse (No Duplication)
+Before writing new methods or tests, check existing ones.
+Reuse Page Objects and Library methods wherever possible.
+Create new utility methods only if a required functionality does not exist.
+Avoid writing direct locators in tests → should always go inside Page Object classes.
+
+5. Follow Page Object Design Pattern (POM)
+Create a Page Object class per page/screen under src/main/java/com/automation/pages/.
+Store all locators and page-level methods inside the respective Page class.
+Example structure:
+
+public class LoginPage {
+    private WebDriver driver;
+    private By username = By.id("username");
+    private By password = By.id("password");
+    private By loginBtn = By.id("login");
+
+    public LoginPage(WebDriver driver) {
+        this.driver = driver;
+    }
+
+    public void login(String user, String pass) {
+        driver.findElement(username).sendKeys(user);
+        driver.findElement(password).sendKeys(pass);
+        driver.findElement(loginBtn).click();
+    }
+}
+
+
+Tests should call:
+
+LoginPage loginPage = new LoginPage(driver);
+loginPage.login("user", "pass");
+
+6. Project Structure and Naming Conventions
+
+Place test classes in src/test/java.
+Use meaningful package names:
+
+com.automation.tests.sanity
+com.automation.tests.regression
+com.automation.tests.api
+
+Page Objects: com.automation.pages
+Library methods: com.automation.library
+
+7. Configuration Management (Properties File)
+
+Keep environment-specific configs (URLs, credentials, timeouts) in a properties file under src/test/resources/config.properties.
+
+Example (config.properties):
+
+baseUrl=https://testapp.com
+username=testuser
+password=Test@123
+apiBaseUrl=https://api.testapp.com
+timeout=20
+
+
+Fetch properties inside tests using a Properties Utility class:
+public class ConfigReader {
+    private static Properties props;
+
+    static {
+        try (InputStream input = new FileInputStream("src/test/resources/config.properties")) {
+            props = new Properties();
+            props.load(input);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String get(String key) {
+        return props.getProperty(key);
+    }
+}
+
+
+Usage in test:
+
+driver.get(ConfigReader.get("baseUrl"));
+
+✅ Summary Checklist
+
+Always use library methods (no direct WebDriver/RestAssured calls in tests).
+Use TestNG groups (sanity, regression) for test categorization.
+Add test signature (author, date, name, description) for every test.
+Reuse existing methods and tests, no duplication.
+Implement Page Object Model strictly.
+Keep tests in src/test/java with meaningful package names.
+Store URLs, credentials, configs in properties file, load via ConfigReader.

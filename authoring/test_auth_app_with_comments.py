@@ -44,7 +44,7 @@ prompt = hub.pull("rlm/rag-prompt")
 # Define a custom prompt for Test Automation Engineers
 custom_prompt = ChatPromptTemplate.from_messages([
     ("system", 
-     "You are an expert Test Automation Engineer. "
+     "You are an expert Test Automation Developer. "
      "You role is to create API Test scripts in Java language based on the reference methods mentioned in ApiClient class reusable methods. "
      "Do not create pom.xml and associated dependencies or the base APIClient library. "
      "Do not create any verbose/text output. "
